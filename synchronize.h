@@ -10,22 +10,23 @@
 
 #define _XTAL_FREQ 1000000
 
-int y,max_y;//output voltage 
-int a,b;//constant
-int x;//input voltage 
-int c_value,d_value,max_value=50;//ADcon value and threshold
-int circle_cnt,circle_time;
-int point,old_point;//data position
+int8_t max_y;//output voltage 
+int8_t a,b;//constant
+int8_t x;//input voltage 
+int8_t c_value,d_value,max_value=50;//ADcon value and threshold
+int8_t circle_cnt,circle_time;
+int8_t point,old_point;//data position
 int8_t rc,receive_databuf,transmit_databuf;
 int8_t receive_data,transmit_data;
-float m,u;//coefficient
-float T;//interrupt period(s)
-float t;//time constant(s) 
+int8_t  m,u;//coefficient
+float   T,t,y;//interrupt period(s)
+//time constant(s) 
 
 
 void synchro_init(){
+    x=10;
     T=0.001;
-    max_y=10;
+    max_y=1;
     t=0.1;
     a=(T/t)/(1+(T/t));
     b=1/(1+(T/t));
@@ -48,25 +49,31 @@ void sensor_read(){
         }
 }
 
-void __interrupt()slave_interrupt(){
+void __interrupt()slave_interrupt(void){
+/*
+    if(TMR1IF){
+        TMR1IF=0;
+        RB4=1;
+    }*/
     GIE=0;//restrict other interrupt
+    //RB4=1;
     if(TMR1IF==1){
-        
+        //RB4=1;
         TMR1H=0x0b;//intialize timer1
         TMR1L=0xdc;
         TMR1ON=0;//stop timer1
         
         circle_cnt++; 
-        y=a*x+b*y+m*u;//calcrate voltage
+        y+=0.5;//a*x+b*y+m*u;//calcrate voltage;
         
         if(y>=max_y){
-            RA3=1;//clock led on    
+            RB4=1;//clock led on    
             y=0;
             circle_time=circle_cnt;
             circle_cnt=0;
         }
         else{
-            RA3=0;//clock led off
+            RB4=0;//clock led off
         }
         m=0;
         old_point=point;
@@ -83,6 +90,8 @@ void __interrupt()slave_interrupt(){
         TMR1ON=1;
     }
     GIE=1;//permit other interrupt
+
+    
 }
 
 
