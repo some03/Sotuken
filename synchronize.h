@@ -20,7 +20,7 @@ int8_t c_value,d_value,max_value=50;//ADcon value and threshold
 int8_t circle_cnt,circle_time;
 int8_t point,old_point;//data position
 int8_t rc,receive_databuf,transmit_databuf;
-int8_t receive_data=NULL,transmit_data=NULL;
+int8_t receive_data=NULL,transmit_data=20;
 int8_t m,u;//coefficient
 float  T,t,y;//interrupt period(s)
 //time constant(s) 
@@ -61,9 +61,21 @@ void __interrupt()slave_interrupt(void){
         TMR1IF=0;
         RB4=1;
     }*/
-    GIE=0;//restrict other interrupt
-    //RB4=1;
-    if(TMR1IF==1){
+    //GIE=0;//restrict other interrupt
+    //RB5=1;
+    if(SSPIF==1){
+        /*while(SSPSTATbits.BF)*/
+       
+        //RB5=1;
+        if(SSPCONbits.SSPOV)SSPCONbits.SSPOV=0;
+        //if(SSPSTAT==0b00001100)RB5=1;
+        //if(SSPCONbits.SSPEN)
+        SSPBUF=20;
+        SSPIF=0;
+        SSPCONbits.CKP=1;
+    }
+    
+    else if(TMR1IF==1){
         //RB4=1;
         TMR1H=0x0b;//intialize timer1
         TMR1L=0xdc;
@@ -73,13 +85,13 @@ void __interrupt()slave_interrupt(void){
         y+=0.5;//a*x+b*y+m*u;//calcrate voltage;
         
         if(y>=max_y){
-            RB4=1;//clock led on    
+            RB5=1;//clock led on    
             y=0;
             circle_time=circle_cnt;
             circle_cnt=0;
         }
         else{
-            RB4=0;//clock led off
+            //RB4=0;//clock led off
         }
         m=0;
         old_point=point;
@@ -95,17 +107,10 @@ void __interrupt()slave_interrupt(void){
         TMR1IF=0;
         TMR1ON=1;
     }
-    else if(SSPIF==1){
-        if(SSPSTAT==0b00001101){
-            int8_t value=SSPBUF;
-            while(SSPSTATbits.BF);
-            SSPCONbits.WCOL=0;
-            SSPBUF=transmit_data;
-            SSPCONbits.CKP=1;
-        }
-        SSPIF=0;
-    }
-    GIE=1;//permit other interrupt
+         
+    
+    //SSPIF=0;
+    //GIE=1;//permit other interrupt
 
     
 }

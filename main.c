@@ -10,7 +10,7 @@
 #include "synchronize.h"
 #pragma config WDTE=OFF
 #pragma config MCLRE = ON
-
+int8_t addr=1;
 
 void main(void) {
     
@@ -27,10 +27,14 @@ void main(void) {
     synchro_init();
     
     //i2c(debug)settings--------------------------
+    
     SSPSTAT=0x00;//400kHz
     SSPCON=0b00110110;//i2c slave mode 7-bit adress
-    SSPADD=0x01;
-    
+    SSPADD=1<<1;
+    SSPIE=1;
+    SSPIF=0;
+    RB5=0; 
+   
     //adconverter settings------------------------
     ADCON0=0x00;//initalize adconverter
     ADCON1=0x00;//fosc/2  
@@ -47,7 +51,7 @@ void main(void) {
    
     while(1){
        RB5=0;
-       sensor_read(); 
+       //sensor_read(); 
         
     }
    
